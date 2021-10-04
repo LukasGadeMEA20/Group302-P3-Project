@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Choose which webcam to capture, 0 for default, 1 for external
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 # Check if the webcam is opened correctly
 if not cap.isOpened():
