@@ -61,8 +61,7 @@ while True:
                 temp_cnts.append(cards[i].contour)
             cv2.drawContours(image,temp_cnts, -1, (255,0,0), 2)
     
-    warped = dCards.flattener(frame, 4, 1, 1)
-
+    
     #Draw contours
     #contours =  cv2.findContours(preProc, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)[-2]
     #for c in contours:
@@ -70,7 +69,7 @@ while True:
 
     #Show video stream
     cv2.imshow('Input', frame)
-    cv2.imshow('flattener', warped)
+    #cv2.imshow('flattens',)
 
     c = cv2.waitKey(1)
     if c == 27: #Press escape to exit
