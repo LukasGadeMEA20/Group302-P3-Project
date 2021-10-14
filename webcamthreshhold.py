@@ -19,11 +19,11 @@ while True:
     # Resizing the webcam display size
     frame = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
 
-    #Preprocessing the video input (from dCards.py)
+    #Preprocessing the video input (from processImage.py)
     preProc = processImage.preprocess_image(frame)
 
     #Draw contours
-    contours =  cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    contours =  cv2.findContours(preProc, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
     for c in contours:
         cv2.drawContours(frame, [c], -1, (255,0,0), 3)
@@ -41,7 +41,6 @@ while True:
         cv2.drawContours(frame, [approx], -1, (0, 255, 0))
 
     # Show the processed webcam feed
-    cv2.imshow('otsu', thresh_img)
     cv2.imshow('frame', frame)
 
     c = cv2.waitKey(1)
