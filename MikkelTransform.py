@@ -3,16 +3,16 @@ import numpy as np
 import matplotlib as plt 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
-image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
+#image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
 cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 # Check if the webcam is opened correctly
-#if not cap.isOpened():
-#    raise IOError("Cannot open webcam")'
+if not cap.isOpened():
+    raise IOError("Cannot open webcam")
 
 while True:
     # Capture frame by frame
-    frame = image
+    frame = cap.read()
 
     # Resizing the webcam display size
     frame = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
