@@ -32,6 +32,12 @@ while True:
         #Approximate contour as a rectangle
         perimeter = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.05 * perimeter, True)
+<<<<<<< Updated upstream
+=======
+        print("approx",approx)
+        print("Perimeter",perimeter)
+        approx = np.squeeze(approx) #Removes redundant dimension
+>>>>>>> Stashed changes
 
        # drawing points
         for point in approx:
@@ -42,6 +48,7 @@ while True:
         # drawing skewed rectangle
         cv2.drawContours(frame, [approx], -1, (0, 255, 0))
 
+<<<<<<< Updated upstream
     img = cv2.imread('serraangelcrop.jpg')
     img = frame
     rows,cols,ch = img.shape
@@ -53,6 +60,14 @@ while True:
 
     dst = cv2.warpPerspective(img,M,(300,300))
     
+=======
+
+    pts2 = np.float32([[0,0],[0,300],[300,300],[300,0]])
+
+    M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+    dst = cv2.warpPerspective(frame,M,(300,300))
+        
+>>>>>>> Stashed changes
     # Show the processed webcam feed
     cv2.imshow('Threshold frame', thresh_img)
     cv2.imshow('Camera frame', frame)
