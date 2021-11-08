@@ -1,3 +1,4 @@
+import copy
 import cv2
 import numpy as np
 import matplotlib as plt 
@@ -19,12 +20,11 @@ while True:
 
     # Our operations on the frame come here
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #Converting the current frame to gray
-    blur = cv2.GaussianBlur(gray,(5,5),0) #Blurring the grey frame
     ret, thresh_img = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
 
     contours =  cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
     for c in contours:
-        cv2.drawContours(frame, [c], -1, (255,0,0), 3)
+        ##cv2.drawContours(frame, [c], -1, (255,0,0), 3)
     
         #Approximate contour as a rectangle
         perimeter = cv2.arcLength(c, True)
@@ -45,7 +45,7 @@ while True:
 
     M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
     print(M)
-    dst = cv2.warpPerspective(frame,M,(300,300))
+    dst = cv2.warpPerspective(frame,M,(240,336))
     
     # Show the processed webcam feed
     cv2.imshow('Threshold frame', thresh_img)
