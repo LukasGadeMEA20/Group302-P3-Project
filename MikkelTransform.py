@@ -47,7 +47,7 @@ while True:
             pts2 = np.float32([[0,0],[0,300],[300,300],[300,0]])
 
             M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-            dst = cv2.warpPerspective(frame,M,(300,300))
+            dst = cv2.warpPerspective(frame,M,(240,336))
    
     
     # Show the processed webcam feed
