@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-import matplotlib as plt 
+import matplotlib as plt
+import copy
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
 #image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
@@ -38,21 +39,20 @@ while True:
             approx = np.squeeze(approx) #Removes redundant dimension
 
             # drawing points
+            frame2 = copy.copy(frame)
+        try:
+            #drawing points
             for point in approx:
                 x = point[0]
                 y = point[1]
-                cv2.circle(frame, (x, y), 3, (0, 255, 0), -1)
-                cv2.putText(frame,str(x),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-
-            # drawing skewed rectangle
-            cv2.drawContours(frame, [approx], -1, (0, 255, 0))
-
-            M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-            dst = cv2.warpPerspective(frame,M,(240,336))
+                cv2.circle(frame2, (x, y), 3, (0, 255, 0), -1)
+                cv2.putText(frame2,str(x),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
             
-                M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-                dst = cv2.warpPerspective(frame,M,(300,400))
-                cv2.imshow('Transformed frame', dst)
+            # drawing skewed rectangle
+            cv2.drawContours(frame2, [approx], -1, (0, 255, 0))
+            ##print("THIS IS CONTOURS",contours)
+            if len(approx) == 4:
+                pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
         except:
                 print("could not find points")
         
