@@ -21,10 +21,6 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #Converting the current frame to gray
     blur = cv2.GaussianBlur(gray,(5,5),0) #Blurring the grey frame
     ret, thresh_img = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
-
-
-    #pts2 = np.float32([[0,0],[0,300],[300,300],[300,0]])
-
     #M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
     #print(M)
     #dst = cv2.warpPerspective(frame,M,(300,300))
@@ -51,13 +47,24 @@ while True:
             # drawing skewed rectangle
             cv2.drawContours(frame, [approx], -1, (0, 255, 0))
 
+            M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+            dst = cv2.warpPerspective(frame,M,(240,336))
+            
+                M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+                dst = cv2.warpPerspective(frame,M,(300,400))
+                cv2.imshow('Transformed frame', dst)
+        except:
+                print("could not find points")
+        
+        
+    # Show the processed webcam feed
+    cv2.imshow('Threshold frame', thresh_img)
+    cv2.imshow('Camera frame', frame2)
+
     # Show the processed webcam feed
     cv2.imshow('Threshold frame', thresh_img)
     cv2.imshow('Camera frame', frame)
     #cv2.imshow('Transformed frame', dst)
-
-    
-
 
 cap.release()
 cv2.destroyAllWindows()
