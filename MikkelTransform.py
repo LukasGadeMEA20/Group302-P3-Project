@@ -5,7 +5,7 @@ import copy
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
 #image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
-cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 # Check if the webcam is opened correctly
 if not cap.isOpened():
@@ -47,11 +47,19 @@ while True:
         ##print("THIS IS CONTOURS",contours)
         if len(approx) == 4:
             pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
+            M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+            #print(M)
+            dst = cv2.warpPerspective(frame,M,(300,400))
+            cv2.imshow('Transformed frame', dst)
+
+            #Crop the image to get the artwork
+            croppedImg = dst[50:220, 30:270]
+            #Show cropped image
+            cv2.imshow("Cropped image", croppedImg)
     except:
             print("could not find points")
-    M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-    #print(M)
-    dst = cv2.warpPerspective(frame,M,(300,300))
+
+
 
     
     # Show the processed webcam feed
