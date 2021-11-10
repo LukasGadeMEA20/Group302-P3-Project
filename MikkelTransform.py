@@ -28,15 +28,26 @@ while True:
         #Approximate contour as a rectangle
         perimeter = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.05 * perimeter, True)
-        print("approx",approx)
+        #print("approx",approx)
         approx = np.squeeze(approx) #Removes redundant dimension
 
 
-       # drawing points
-        for point in approx:
-            x = point[0]
-            y = point[1]
+        frame2 = copy.copy(frame)
+        try:
+            #drawing points
+            for point in approx:
+                x = point[0]
+                y = point[1]
+                cv2.circle(frame2, (x, y), 3, (0, 255, 0), -1)
+                cv2.putText(frame2,str(x),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
+            
+            # drawing skewed rectangle
+            cv2.drawContours(frame2, [approx], -1, (0, 255, 0))
+            ##print("THIS IS CONTOURS",contours)
+            if len(approx) == 4:
+                pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
 
+<<<<<<< Updated upstream
             #cv2.circle(frame, (x, y), 3, (0, 255, 0), -1)
             #cv2.putText(frame,str(x),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
 
@@ -48,12 +59,21 @@ while True:
 
             M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
             dst = cv2.warpPerspective(frame,M,(240,336))
+=======
+                M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+                dst = cv2.warpPerspective(frame,M,(300,400))
+                cv2.imshow('Transformed frame', dst)
+        except:
+                print("could not find points")
+        
+        
+>>>>>>> Stashed changes
    
     
     # Show the processed webcam feed
     cv2.imshow('Threshold frame', thresh_img)
-    cv2.imshow('Camera frame', frame)
-    cv2.imshow('Transformed frame', dst)
+    cv2.imshow('Camera frame', frame2)
+
 
     c = cv2.waitKey(1)
     if c == 27: #Press escape to exit
