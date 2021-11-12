@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+#import tensorflow as tf
+#from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -40,6 +40,9 @@ def blurImage(gray):
 
 def threshholdImage(gray, tVal):
     return cv2.threshold(gray, tVal, 255, cv2.THRESH_BINARY_INV)
+
+def otsuThreshholdImage(gray):
+    return cv2.threshold(gray,125,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -86,7 +89,7 @@ def drawContours(contours, frame, copiedFrame):
 
                 #Preprocess the cropped image and show it
                 greyCrop = grayScale(croppedImg)
-                ret, threshCrop = threshholdImage(greyCrop, 80)
+                ret, threshCrop = otsuThreshholdImage(greyCrop)
                 cv2.imshow("Hej", threshCrop)
         except:
             print(" ")
