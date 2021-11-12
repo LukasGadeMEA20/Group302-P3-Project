@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
+import keras
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
 #image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
@@ -35,11 +39,23 @@ def grayScale(frame):
 def blurImage(gray):
     return cv2.GaussianBlur(gray,(5,5),0) #Blurring the grey frame
 
-def threshholdImage(gray):
-    return cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
+def threshholdImage(gray, tVal):
+    return cv2.threshold(gray, tVal, 255, cv2.THRESH_BINARY_INV)
 
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+def loadCardArtwork(filePath):
+    cardArtwork = []
+    i = 0
+
+def preProcData():
+    train_datagen = ImageDataGenerator(rescale=1./255, zoom_range=0.2, horizontal_flip=True)
+    training_set = train_datagen.flow_from_directory('../cardArtwork', color_mode='rgb')
+
+def defData():
+    cnn = tf.keras.models.Sequential()
+    cnn.add(tf.keras.)
 
 def drawContours(contours, frame, copiedFrame):
     for c in contours:
@@ -69,12 +85,16 @@ def drawContours(contours, frame, copiedFrame):
                 dst = cv2.warpPerspective(frame,M,(300,400))
                 cv2.imshow('Transformed frame', dst)
 
-                #Crop the image to get the artwork
+                #Crop the image to get the artwork and show it
                 croppedImg = dst[50:220, 30:270]
-                #Show cropped image
                 cv2.imshow("Cropped image", croppedImg)
+
+                #Preprocess the cropped image and show it
+                greyCrop = grayScale(croppedImg)
+                ret, threshCrop = threshholdImage(greyCrop, 80)
+                cv2.imshow("Hej", threshCrop)
         except:
-            print("could not find points")
+            print(" ")
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
         
         
@@ -84,8 +104,9 @@ if __name__ == '__main__':
         frame = setCameraSize(cap)
         copiedFrame = copy.copy(frame)
         gray = grayScale(frame)
-        ret, thresh_img = threshholdImage(gray)
+        ret, thresh_img = threshholdImage(gray, 100)
         contours = findContours(thresh_img)
+        drawContours(contours, frame, copiedFrame)
 
         
         # Show the processed webcam feed
