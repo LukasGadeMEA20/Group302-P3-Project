@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
-import keras
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -49,13 +48,9 @@ def loadCardArtwork(filePath):
     cardArtwork = []
     i = 0
 
-def preProcData():
-    train_datagen = ImageDataGenerator(rescale=1./255, zoom_range=0.2, horizontal_flip=True)
-    training_set = train_datagen.flow_from_directory('../cardArtwork', color_mode='rgb')
-
-def defData():
-    cnn = tf.keras.models.Sequential()
-    cnn.add(tf.keras.)
+#def preProcData():
+#    train_datagen = ImageDataGenerator(rescale=1./255, zoom_range=0.2, horizontal_flip=True)
+#    training_set = train_datagen.flow_from_directory('../cardArtwork/dataset', target_size=(560, 410))
 
 def drawContours(contours, frame, copiedFrame):
     for c in contours:
