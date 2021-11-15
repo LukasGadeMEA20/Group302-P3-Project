@@ -79,8 +79,8 @@ def drawContours(contours, frame, copiedFrame):
 
                 #Preprocess the cropped image and show it
                 greyCrop = grayScale(croppedImg)
-                ret, threshCrop = otsuThreshholdImage(greyCrop)
-                cv2.imshow("Hej", threshCrop)
+                #ret, threshCrop = otsuThreshholdImage(greyCrop)
+                cv2.imshow("Cropped grey", greyCrop)
         except:
             print(" ")
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
