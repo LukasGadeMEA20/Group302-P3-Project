@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
-#import tensorflow as tf
-#from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -50,10 +48,6 @@ def findContours(thresh_img):
 def loadCardArtwork(filePath):
     cardArtwork = []
     i = 0
-
-#def preProcData():
-#    train_datagen = ImageDataGenerator(rescale=1./255, zoom_range=0.2, horizontal_flip=True)
-#    training_set = train_datagen.flow_from_directory('../cardArtwork/dataset', target_size=(560, 410))
 
 def drawContours(contours, frame, copiedFrame):
     for c in contours:
