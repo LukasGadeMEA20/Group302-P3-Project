@@ -5,9 +5,9 @@ import copy
 import os
 
 DATABASE_PATH = 'card_data_base'
-N_IMAGES = 3
-IMG_WIDTH = 560
-IMG_HEIGHT = 410
+N_IMAGES = 5
+IMG_WIDTH = 638
+IMG_HEIGHT = 465
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -29,7 +29,7 @@ def setCameraSize(cap):
     return cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
 
 def load_database(verbose: bool = False) -> np.ndarray:
-    """Load and preprocess the databse of images"""
+    """Load and preprocess the database of images"""
     database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
     if verbose:
         fig_list = []
@@ -70,7 +70,18 @@ def otsuThreshholdImage(gray):
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
-def drawContours(contours, frame, copiedFrame):
+def compare(greyCrop,database):
+    for i in range(N_IMAGES):
+        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
+        img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
+        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
+        dot_prod = np.dot(database, img_vector)  # Compute dot product b = A*x
+        dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
+        print("LORT")
+        # Print results:
+        print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
+        print("FORBI")
+def drawContours(contours, frame, copiedFrame, database):
     for c in contours:
         cv2.drawContours(frame, [c], -1, (255,0,0), 3)
     
@@ -106,14 +117,15 @@ def drawContours(contours, frame, copiedFrame):
                 greyCrop = grayScale(croppedImg)
                 #ret, threshCrop = otsuThreshholdImage(greyCrop)
                 cv2.imshow("Cropped grey", greyCrop)
+                compare(greyCrop, database)
+                
         except:
             print(" ")
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
         
-        
 if __name__ == '__main__':
     cap = loadCamera()
-    load_database()
+    database = load_database()
 
     while True:
         frame = setCameraSize(cap)
@@ -121,7 +133,8 @@ if __name__ == '__main__':
         gray = grayScale(frame)
         ret, thresh_img = threshholdImage(gray, 100)
         contours = findContours(thresh_img)
-        drawContours(contours, frame, copiedFrame)
+        drawContours(contours, frame, copiedFrame, database)
+
 
         
         # Show the processed webcam feed
