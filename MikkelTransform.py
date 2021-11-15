@@ -3,11 +3,12 @@ import numpy as np
 import matplotlib as plt
 import copy
 import os
+import pyautogui
 
 DATABASE_PATH = 'card_data_base'
 N_IMAGES = 5
-IMG_WIDTH = 638
-IMG_HEIGHT = 465
+IMG_WIDTH = 240
+IMG_HEIGHT = 170
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -77,10 +78,9 @@ def compare(greyCrop,database):
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         dot_prod = np.dot(database, img_vector)  # Compute dot product b = A*x
         dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
-        print("LORT")
         # Print results:
         print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
-        print("FORBI")
+
 def drawContours(contours, frame, copiedFrame, database):
     for c in contours:
         cv2.drawContours(frame, [c], -1, (255,0,0), 3)
