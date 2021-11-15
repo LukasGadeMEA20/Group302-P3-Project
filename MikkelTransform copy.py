@@ -2,32 +2,10 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
-
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
-# Choose which webcam to capture, 0 for default, 1 for external
-#image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
-def loadCamera():
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
-    # Check if the webcam is opened correctly
-    if not cap.isOpened():
-        raise IOError("Cannot open webcam")
-
-    return cap
-
-def setCameraSize(cap):
-    # Capture frame by frame
-    ret, frame = cap.read()
-    
-    # Capture frame by frame
-    return cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
-    
-#while True:
-    # Capture frame by frame
-    #ret, frame = cap.read()
-
-    # Resizing the webcam display size
-    #frame = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
+image = cv2.imread('C:\\Users\\profe\\Documents\\GitHub\\Group302-P3-Project\\dImages\\testImg.png')
+frame = image
 
 def grayScale(frame):
     # Our operations on the frame come here
@@ -36,11 +14,8 @@ def grayScale(frame):
 def blurImage(gray):
     return cv2.GaussianBlur(gray,(5,5),0) #Blurring the grey frame
 
-def threshholdImage(gray, tVal):
-    return cv2.threshold(gray, tVal, 255, cv2.THRESH_BINARY_INV)
-
-def otsuThreshholdImage(gray):
-    return cv2.threshold(gray,125,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+def threshholdImage(gray):
+    return cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
 
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -73,28 +48,22 @@ def drawContours(contours, frame, copiedFrame):
                 dst = cv2.warpPerspective(frame,M,(300,400))
                 cv2.imshow('Transformed frame', dst)
 
-                #Crop the image to get the artwork and show it
+                #Crop the image to get the artwork
                 croppedImg = dst[50:220, 30:270]
+                #Show cropped image
                 cv2.imshow("Cropped image", croppedImg)
-
-                #Preprocess the cropped image and show it
-                greyCrop = grayScale(croppedImg)
-                #ret, threshCrop = otsuThreshholdImage(greyCrop)
-                cv2.imshow("Cropped grey", greyCrop)
         except:
-            print(" ")
+            print("could not find points")
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
         
         
 if __name__ == '__main__':
-    cap = loadCamera()
     while True:
-        frame = setCameraSize(cap)
         copiedFrame = copy.copy(frame)
         gray = grayScale(frame)
-        ret, thresh_img = threshholdImage(gray, 100)
+        ret, thresh_img = threshholdImage(gray)
         contours = findContours(thresh_img)
-        drawContours(contours, frame, copiedFrame)
+        drawContours(contours,frame,copiedFrame)
 
         
         # Show the processed webcam feed
@@ -110,7 +79,4 @@ if __name__ == '__main__':
         if c == 27: #Press escape to exit
             break
 
-    cap.release()
     cv2.destroyAllWindows()
-
-
