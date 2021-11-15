@@ -2,6 +2,12 @@ import cv2
 import numpy as np
 import matplotlib as plt
 import copy
+import os
+
+DATABASE_PATH = 'card_data_base'
+N_IMAGES = 3
+IMG_WIDTH = 560
+IMG_HEIGHT = 410
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -21,7 +27,26 @@ def setCameraSize(cap):
     
     # Capture frame by frame
     return cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
-    
+
+def load_database(verbose: bool = False) -> np.ndarray:
+    """Load and preprocess the databse of images"""
+    database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
+    if verbose:
+        fig_list = []
+        ax_list = []
+        for _ in range(N_IMAGES):
+            fig, ax = plt.subplots(1, 3)
+            fig_list.append(fig)
+            ax_list.append(ax)
+
+    for i in range(N_IMAGES):
+        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.jpg'))  # Read image in BGR (height, width, 3)
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale (height, width)
+        img_vector = img_gray.flatten()  # Convert image to vector (height * width)
+        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
+        database[i, :] = img_vector  
+    return database
+
 #while True:
     # Capture frame by frame
     #ret, frame = cap.read()
@@ -88,6 +113,8 @@ def drawContours(contours, frame, copiedFrame):
         
 if __name__ == '__main__':
     cap = loadCamera()
+    load_database()
+
     while True:
         frame = setCameraSize(cap)
         copiedFrame = copy.copy(frame)
