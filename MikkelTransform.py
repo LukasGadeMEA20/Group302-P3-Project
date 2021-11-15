@@ -45,10 +45,6 @@ def otsuThreshholdImage(gray):
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
-def loadCardArtwork(filePath):
-    cardArtwork = []
-    i = 0
-
 def drawContours(contours, frame, copiedFrame):
     for c in contours:
         cv2.drawContours(frame, [c], -1, (255,0,0), 3)
