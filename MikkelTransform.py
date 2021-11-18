@@ -6,7 +6,7 @@ import os
 import pyautogui
 
 DATABASE_PATH = 'card_data_base'
-N_IMAGES = 5
+N_IMAGES = 6
 IMG_WIDTH = 240
 IMG_HEIGHT = 170
 
