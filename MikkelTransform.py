@@ -7,13 +7,40 @@ np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
 #image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
 def loadCamera():
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
 
     # Check if the webcam is opened correctly
     if not cap.isOpened():
         raise IOError("Cannot open webcam")
 
     return cap
+
+refPt = []
+clicked = False
+
+def click_and_crop(event, x, y, flags, param):
+	# grab references to the global variables
+    global refPt, cropping
+	# if the left mouse button was clicked, record the starting
+	# (x, y) coordinates and indicate that cropping is being
+	# performed
+    if event == cv2.EVENT_LBUTTONUP:
+        refPt = [x,y]
+        print(str(refPt[1])+","+str(refPt[0]))
+        checkMousePoint(refPt)
+        #print(refPt)
+        #clicked = True
+
+cv2.namedWindow("Camera frame")
+cv2.setMouseCallback("Camera frame", click_and_crop)
+
+def checkMousePoint(point):
+    global clicked
+    print(im_out[point[1],point[0]])
+    if im_out[point[1],point[0]] == 255:
+        clicked = True
+    else:
+        clicked = False
 
 def setCameraSize(cap):
     # Capture frame by frame
@@ -33,8 +60,40 @@ def grayScale(frame):
     # Our operations on the frame come here
     return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #Converting the current frame to gray
 
-def blurImage(gray):
-    return cv2.GaussianBlur(gray,(5,5),0) #Blurring the grey frame
+def preProcess(grayScale, val):
+    ret, im_th = threshholdImage(grayScale, val)
+
+    floodBorder = copy.copy(im_th)
+
+    h, w = im_th.shape[:2]
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Fill everything that is the same colour (black) as top-left corner with black
+    cv2.floodFill(floodBorder, mask, (0,0), 0)
+
+    h, w = im_th.shape[:2]
+    mask = np.zeros((h+2, w+2), np.uint8)
+
+    # Fill everything that is the same colour (black) as top-left corner with white
+    cv2.floodFill(floodBorder, mask, (0,0), 255)
+
+    im_floodfill_inv = cv2.bitwise_not(floodBorder)
+
+    global im_out
+    im_out = im_floodfill_inv | im_th
+
+    h, w = im_th.shape[:2]
+    mask = np.zeros((h+2, w+2), np.uint8)
+    # Fill everything that is the same colour (black) as top-left corner with white
+    cv2.floodFill(im_out, mask, (0,0), 0)
+
+    return im_out
+
+def erode(input, kSize):
+    return cv2.erode(input, np.ones((kSize,kSize), np.uint8))
+
+def dilate(input, kSize):
+    return cv2.dilate(input, np.ones((kSize,kSize), np.uint8))
 
 def threshholdImage(gray, tVal):
     return cv2.threshold(gray, tVal, 255, cv2.THRESH_BINARY_INV)
@@ -45,9 +104,12 @@ def otsuThreshholdImage(gray):
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
+def findFloodContours(thresh_img):
+    return cv2.findContours(thresh_img, cv2.RETR_FLOODFILL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+
 def drawContours(contours, frame, copiedFrame):
     for c in contours:
-        cv2.drawContours(frame, [c], -1, (255,0,0), 3)
+        cv2.drawContours(copiedFrame, [c], -1, (255,0,0), 3)
     
         #Approximate contour as a rectangle
         perimeter = cv2.arcLength(c, True)
@@ -61,12 +123,14 @@ def drawContours(contours, frame, copiedFrame):
                 x = point[0]
                 y = point[1]
                 cv2.circle(copiedFrame, (x, y), 3, (0, 255, 0), -1)
-                cv2.putText(copiedFrame,str(x),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
+                cv2.putText(copiedFrame,(str(x)+','+str(y)),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
+                cv2.imshow('Gaming frame', copiedFrame)
         
             # drawing skewed rectangle
             cv2.drawContours(copiedFrame, [approx], -1, (0, 255, 0))
             ##print("THIS IS CONTOURS",contours)
             if len(approx) == 4:
+                print(approx)
                 pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
                 M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
                 #print(M)
@@ -92,14 +156,19 @@ if __name__ == '__main__':
         frame = setCameraSize(cap)
         copiedFrame = copy.copy(frame)
         gray = grayScale(frame)
-        ret, thresh_img = threshholdImage(gray, 100)
-        contours = findContours(thresh_img)
-        drawContours(contours, frame, copiedFrame)
-
+        #ret, thresh_img = threshholdImage(gray, 100)
+        thresh_img = preProcess(gray, 123)
+        eroded = erode(thresh_img,11)
+        #eroded = dilate(eroded,3)
+        if clicked:
+            contours= findContours(eroded)
+            drawContours(contours, frame, copiedFrame)
+            clicked = False
+        #contours = findContours(thresh_img)
         
         # Show the processed webcam feed
         cv2.imshow('Threshold frame', thresh_img)
-        cv2.imshow('Camera frame', copiedFrame)
+        cv2.imshow('Eroded', eroded)
 
         # Show the processed webcam feed
         cv2.imshow('Threshold frame', thresh_img)
