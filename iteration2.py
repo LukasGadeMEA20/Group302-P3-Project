@@ -23,6 +23,9 @@ def loadCamera():
 
     return cap
 
+refPt = []
+clicked = False
+
 def load_database(verbose: bool = False) -> np.ndarray:
     """Load and preprocess the database of images"""
     database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
@@ -43,8 +46,15 @@ def load_database(verbose: bool = False) -> np.ndarray:
 
     return database
 
-refPt = []
-clicked = False
+def compare(greyCrop,database):
+    for i in range(N_IMAGES):
+        #img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
+        img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
+        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
+        dot_prod = np.dot(database, img_vector)  # Compute dot product b = A*x
+        dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
+        # Print results:
+        print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
 
 def click_and_crop(event, x, y, flags, param):
 	# grab references to the global variables
@@ -58,6 +68,15 @@ def click_and_crop(event, x, y, flags, param):
         checkMousePoint(refPt)
         #print(refPt)
         #clicked = True
+
+def click(event, x, y, flags, param):
+    global piss
+    if event == cv2.EVENT_LBUTTONUP:
+        piss = [x,y]
+        print(piss)
+
+cv2.namedWindow("Transformed frame")
+cv2.setMouseCallback("Transformed frame", click)
 
 cv2.namedWindow("Camera frame")
 cv2.setMouseCallback("Camera frame", click_and_crop)
@@ -91,31 +110,28 @@ def grayScale(frame):
 def preProcess(grayScale, val):
     ret, im_th = threshholdImage(grayScale, val)
 
-    floodBorder = copy.copy(im_th)
+    floodBorder = copy.copy(im_th)    
 
-    h, w = im_th.shape[:2]
-    mask = np.zeros((h+2, w+2), np.uint8)
-
-    # Fill everything that is the same colour (black) as top-left corner with black
-    cv2.floodFill(floodBorder, mask, (0,0), 0)
-
-    h, w = im_th.shape[:2]
-    mask = np.zeros((h+2, w+2), np.uint8)
-
-    # Fill everything that is the same colour (black) as top-left corner with white
-    cv2.floodFill(floodBorder, mask, (0,0), 255)
+    floodFill(floodBorder, 0,0,0)
+    floodFill(floodBorder,0,0,255)
 
     im_floodfill_inv = cv2.bitwise_not(floodBorder)
 
     global im_out
     im_out = im_floodfill_inv | im_th
 
-    h, w = im_th.shape[:2]
-    mask = np.zeros((h+2, w+2), np.uint8)
-    # Fill everything that is the same colour (black) as top-left corner with white
-    cv2.floodFill(im_out, mask, (0,0), 0)
+    h, w = im_out.shape[:2]
+    floodFill(im_out, 0,0, 0)
+    floodFill(im_out, h-1, 0,0)
+    floodFill(im_out, h-1, w-1,0)
+    floodFill(im_out, 0, w-1,0)
 
     return im_out
+
+def floodFill(img, y, x, colour):
+    h, w = img.shape[:2]
+    mask = np.zeros((h+2,w+2),np.uint8)
+    return cv2.floodFill(img, mask, (x,y), colour)
 
 def erode(input, kSize):
     return cv2.erode(input, np.ones((kSize,kSize), np.uint8))
@@ -158,8 +174,7 @@ def selectOne(contours):
             firstCheck = True
     
     return closeContours
-
-            
+         
 def findMiddlePoint(array):
     temp = 0
     for i in array:
@@ -173,62 +188,84 @@ def findFloodContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_FLOODFILL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
 def rotateImage(img):
-    print("HI")
-    print(img.shape)
     rows = img.shape[0]
     cols = img.shape[1]
-    print("gaming")
 
+    # Creates a rotation matrix to rotate (counter)clockwise
     M = cv2.getRotationMatrix2D((cols/2, rows/2),-90,1)
-    print("gaming1")
+    # Returns the input rotated.
     return cv2.warpAffine(img,M,(cols,rows))
 
-def rotateContours(c):
-    p1, p2, p3, p4 = [], [], [], []
-    tempContours = c
-    newContours = c
-    
-    p1 = tempContours[0]
-    for i in tempContours:
-        if i[0] < p1[0]:
-            p1 = i
 
-    #print(tempContours, p1)
-    indexArr = np.argwhere(tempContours == p1[1])
-    tempContours = np.delete(tempContours, [indexArr], 0)
+def checkRotate(img):
+    imgToRotate = copy.copy(img)
+    for i in range(4):
+        cv2.imshow(str(i),imgToRotate)
 
-    p2 = tempContours[0]
-    for i in tempContours:
-        if distance(p1, i) < distance(p1, p2):
-            p2 = i
-    
-    indexArr = np.argwhere(tempContours == p2[0])
-    tempContours = np.delete(tempContours, [indexArr], 0)
+        symbol = imgToRotate[10:40, 260:285]
+        #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
+        symbolPP = preProcess(symbol, 50)
+        im_floodfill_inv = cv2.bitwise_not(symbolPP)
 
-    newContours[1] = p1 if p1[1] < p2[1] else p2
-    newContours[2] = p2 if p2[1] > p1[1] else p1
+        blob = blobFinder(im_floodfill_inv)
+        #print(blob)
+        if blob != []:
+            print("game")
+            return imgToRotate
+        else:
+            #Figure out rotating tomorrow
+            print("Not rotated")
 
-    p3 = tempContours[0]
-    p4 = tempContours[1]
-    newContours[3] = p3 if p3[1] > p4[1] else p4
-    newContours[0] = p4 if p3[1] > p4[1] else p3
+    #blob = cv2.resize(blob, [300,300])
+    #cv2.imshow("BLOB",blob)
 
-    return newContours
+    return imgToRotate
+
+def blobFinder(img):
+    # Setup SimpleBlobDetector parameters.
+    params = cv2.SimpleBlobDetector_Params()
+
+    # Change thresholds
+    params.minThreshold = 10
+    params.maxThreshold = 200
+
+    # Filter by Area.
+    params.filterByArea = True
+    params.minArea = 50
+    # This value is what i tweaked to filter which areas it outlines
+    # The value has to be 1602 or above to only outline the biggest blob.
+
+    # Filter by Circularity
+    params.filterByCircularity = True
+    params.minCircularity = 0.1
+
+    # Filter by Convexity
+    params.filterByConvexity = True
+    params.minConvexity = 0.87
+
+    # Filter by Inertia
+    params.filterByInertia = True
+    params.minInertiaRatio = 0.01
+
+    # Create a detector with the parameters
+    detector = cv2.SimpleBlobDetector_create(params)
+
+    # Detect blobs.
+    keypoints = detector.detect(img)
+
+    # Draw detected blobs as red circles.
+    # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures
+    # the size of the circle corresponds to the size of blob
+
+    im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    #cv2.imshow("image", im_with_keypoints)
+    return keypoints
+
 
 def distance(p1, p2):
     return math.sqrt(math.pow((p2[1]-p1[1]),2) + math.pow((p2[0]-p1[0]),2))
 
-def compare(greyCrop,database):
-    for i in range(N_IMAGES):
-        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
-        img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
-        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
-        dot_prod = np.dot(database, img_vector)  # Compute dot product b = A*x
-        dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
-        # Print results:
-        print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
-
-def drawContours(contours, frame, copiedFrame, database):
+def drawContours(c, frame, copiedFrame):
     #for c in contours:
     cv2.drawContours(copiedFrame, c, -1, (255,0,0), 3)
 
@@ -246,36 +283,44 @@ def drawContours(contours, frame, copiedFrame, database):
             y = point[1]
             cv2.circle(copiedFrame, (x, y), 3, (0, 255, 0), -1)
             cv2.putText(copiedFrame,(str(x)+','+str(y)),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
-            cv2.imshow('Gaming frame', copiedFrame)
-    
-        # drawing skewed rectangle
-        cv2.drawContours(copiedFrame, [approx], -1, (0, 255, 0))
-        ##print("THIS IS CONTOURS",contours)
-        if len(approx) == 4:
-            #print(approx)
-            pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
-            M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-            #print(M)
-            dst = cv2.warpPerspective(frame,M,(300,400))
-            #dst = rotateImage(dst) this function rotates the image. 
-            cv2.imshow('Transformed frame', dst)
+            #cv2.imshow('Gaming frame', copiedFrame)
 
-            #Crop the image to get the artwork and show it
-            croppedImg = dst[50:220, 30:270]
-            cv2.imshow("Cropped image", croppedImg)
+        try:
+            # drawing skewed rectangle
+            cv2.drawContours(copiedFrame, [approx], -1, (0, 255, 0))
+            if len(approx) == 4:
+                pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
+                M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+                warped = cv2.warpPerspective(frame,M,(300,400))
+                warpedGray = grayScale(warped)
+                symbol = checkRotate(warpedGray)
+                symbol = cv2.resize(symbol, [300,300])
+                cv2.imshow("IMGTOROTATE image", symbol)
+                #rotated = rotateImage(warped) #this function rotates the image. 
+                # Warp it to be the correct dimensions
+                cv2.imshow('Transformed frame', warped)
 
-            #Preprocess the cropped image and show it
-            greyCrop = grayScale(croppedImg)
-            ret, threshCrop = otsuThreshholdImage(greyCrop)
-            cv2.imshow("Cropped grey", threshCrop)
-            compare(greyCrop, database)
+                #Crop the image to get the artwork and show it
+                croppedImg = warped[50:220, 30:270]
+                cv2.imshow("Cropped image", croppedImg)
+
+                #Preprocess the cropped image and show it
+                greyCrop = grayScale(croppedImg)
+                ret, threshCrop = otsuThreshholdImage(greyCrop)
+                cv2.imshow("Cropped grey", threshCrop)
+                compare(greyCrop, database)
+        except:
+            print("Error 2")
     except:
-        print(" ")
+        print("Could not find card")    
+    
+    
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
         
         
 if __name__ == '__main__':
     cap = loadCamera()
+    global database
     database = load_database()
     while True:
         frame = setCameraSize(cap)
@@ -288,8 +333,7 @@ if __name__ == '__main__':
         if clicked:
             contours = findContours(eroded)
             cardClickedContours = selectOne(contours)
-            
-            drawContours(contours, frame, copiedFrame, database)
+            drawContours(cardClickedContours, frame, copiedFrame)
             clicked = False
         #contours = findContours(thresh_img)
         

@@ -132,7 +132,7 @@ if __name__ == '__main__':
         gray = grayScale(frame)
         ret, thresh_img = threshholdImage(gray, 100)
         contours= findContours(thresh_img)
-        drawContours(contours, frame, copiedFrame)
+        #drawContours(contours, frame, copiedFrame)
         drawContours(contours, frame, copiedFrame, database)
         #contours = findContours(thresh_img)
         
