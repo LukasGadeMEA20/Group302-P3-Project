@@ -3,6 +3,13 @@ import numpy as np
 import matplotlib as plt
 import copy
 import math
+import os
+import pyautogui
+
+DATABASE_PATH = 'card_data_base'
+N_IMAGES = 6
+IMG_WIDTH = 240
+IMG_HEIGHT = 170
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -15,6 +22,26 @@ def loadCamera():
         raise IOError("Cannot open webcam")
 
     return cap
+
+def load_database(verbose: bool = False) -> np.ndarray:
+    """Load and preprocess the database of images"""
+    database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
+    if verbose:
+        fig_list = []
+        ax_list = []
+        for _ in range(N_IMAGES):
+            fig, ax = plt.subplots(1, 3)
+            fig_list.append(fig)
+            ax_list.append(ax)
+
+    for i in range(N_IMAGES):
+        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.jpg'))  # Read image in BGR (height, width, 3)
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale (height, width)
+        img_vector = img_gray.flatten()  # Convert image to vector (height * width)
+        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
+        database[i, :] = img_vector  
+
+    return database
 
 refPt = []
 clicked = False
@@ -191,7 +218,17 @@ def rotateContours(c):
 def distance(p1, p2):
     return math.sqrt(math.pow((p2[1]-p1[1]),2) + math.pow((p2[0]-p1[0]),2))
 
-def drawContours(c, frame, copiedFrame):
+def compare(greyCrop,database):
+    for i in range(N_IMAGES):
+        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
+        img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
+        img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
+        dot_prod = np.dot(database, img_vector)  # Compute dot product b = A*x
+        dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
+        # Print results:
+        print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
+
+def drawContours(contours, frame, copiedFrame, database):
     #for c in contours:
     cv2.drawContours(copiedFrame, c, -1, (255,0,0), 3)
 
@@ -231,6 +268,7 @@ def drawContours(c, frame, copiedFrame):
             greyCrop = grayScale(croppedImg)
             ret, threshCrop = otsuThreshholdImage(greyCrop)
             cv2.imshow("Cropped grey", threshCrop)
+            compare(greyCrop, database)
     except:
         print(" ")
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
@@ -238,6 +276,7 @@ def drawContours(c, frame, copiedFrame):
         
 if __name__ == '__main__':
     cap = loadCamera()
+    database = load_database()
     while True:
         frame = setCameraSize(cap)
         copiedFrame = copy.copy(frame)
@@ -249,7 +288,8 @@ if __name__ == '__main__':
         if clicked:
             contours = findContours(eroded)
             cardClickedContours = selectOne(contours)
-            drawContours(cardClickedContours, frame, copiedFrame)
+            
+            drawContours(contours, frame, copiedFrame, database)
             clicked = False
         #contours = findContours(thresh_img)
         
