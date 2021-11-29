@@ -175,25 +175,18 @@ def rotateContours(c):
         if distance(p1, i) < distance(p1, p2):
             p2 = i
     
-    print(tempContours)
     indexArr = np.argwhere(tempContours == p2[0])
-    print(indexArr)
     tempContours = np.delete(tempContours, [indexArr], 0)
-    print(tempContours)
 
-    print(p1[1], p2[1])
     newContours[1] = p1 if p1[1] < p2[1] else p2
     newContours[2] = p2 if p2[1] > p1[1] else p1
 
-    print(tempContours)
     p3 = tempContours[0]
     p4 = tempContours[1]
     newContours[3] = p3 if p3[1] > p4[1] else p4
     newContours[0] = p4 if p3[1] > p4[1] else p3
 
     return newContours
-
-
 
 def distance(p1, p2):
     return math.sqrt(math.pow((p2[1]-p1[1]),2) + math.pow((p2[0]-p1[0]),2))
