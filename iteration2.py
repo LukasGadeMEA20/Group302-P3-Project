@@ -115,6 +115,22 @@ def preProcess(grayScale, val):
     floodFill(floodBorder, 0,0,0)
     floodFill(floodBorder,0,0,255)
 
+    # Kode der skal testes
+    '''h, w = floodBorder.shape[:2]
+    mask = np.zeros((h+2,w+2),np.uint8)
+    
+    for x in range(h):
+        if floodBorder[x,0] != 0:
+            cv2.floodFill(floodBorder, None, (0, x),0)
+        if floodBorder[x, w-1] != 0:
+            cv2.floodFill(floodBorder, None, (w-1, x),0)
+
+    for y in range(w):
+        if floodBorder[0,y] != 0:
+            cv2.floodFill(floodBorder, None, (y,0),0)
+        if floodBorder[h-1, y] != 0:
+            cv2.floodFill(floodBorder, None, (y, h-1), 0)'''
+
     im_floodfill_inv = cv2.bitwise_not(floodBorder)
 
     global im_out
@@ -197,29 +213,28 @@ def rotateImage(img):
     return cv2.warpAffine(img,M,(cols,rows))
 
 
-def checkRotate(img):
+def checkRotate(img, i):
     imgToRotate = copy.copy(img)
-    for i in range(4):
-        cv2.imshow(str(i),imgToRotate)
+    cv2.imshow(str(i),imgToRotate)
 
-        symbol = imgToRotate[10:40, 260:285]
-        #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
-        symbolPP = preProcess(symbol, 50)
-        im_floodfill_inv = cv2.bitwise_not(symbolPP)
+    symbol = imgToRotate[10:40, 260:285]
+    #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
+    symbolPP = preProcess(symbol, 50)
+    im_floodfill_inv = cv2.bitwise_not(symbolPP)
 
-        blob = blobFinder(im_floodfill_inv)
-        #print(blob)
-        if blob != []:
-            print("game")
-            return imgToRotate
-        else:
-            #Figure out rotating tomorrow
-            print("Not rotated")
+    blob = blobFinder(im_floodfill_inv)
+    #print(blob)
+    if blob != []:
+        print("game")
+        return imgToRotate
+    else:
+        cv2.resize(imgToRotate, [300,400])
+        return rotateImage(imgToRotate)
 
     #blob = cv2.resize(blob, [300,300])
     #cv2.imshow("BLOB",blob)
 
-    return imgToRotate
+    #return imgToRotate
 
 def blobFinder(img):
     # Setup SimpleBlobDetector parameters.
@@ -261,7 +276,6 @@ def blobFinder(img):
     #cv2.imshow("image", im_with_keypoints)
     return keypoints
 
-
 def distance(p1, p2):
     return math.sqrt(math.pow((p2[1]-p1[1]),2) + math.pow((p2[0]-p1[0]),2))
 
@@ -293,7 +307,10 @@ def drawContours(c, frame, copiedFrame):
                 M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
                 warped = cv2.warpPerspective(frame,M,(300,400))
                 warpedGray = grayScale(warped)
-                symbol = checkRotate(warpedGray)
+
+                for i in range(4):
+                    symbol = checkRotate(warpedGray, i)
+                
                 symbol = cv2.resize(symbol, [300,300])
                 cv2.imshow("IMGTOROTATE image", symbol)
                 #rotated = rotateImage(warped) #this function rotates the image. 
