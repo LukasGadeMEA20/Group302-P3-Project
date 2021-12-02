@@ -58,25 +58,13 @@ def compare(greyCrop,database):
 
 def click_and_crop(event, x, y, flags, param):
 	# grab references to the global variables
-    global refPt, cropping
+    global refPt
 	# if the left mouse button was clicked, record the starting
 	# (x, y) coordinates and indicate that cropping is being
 	# performed
     if event == cv2.EVENT_LBUTTONUP:
         refPt = [x,y]
-        #print(str(refPt[1])+","+str(refPt[0]))
         checkMousePoint(refPt)
-        #print(refPt)
-        #clicked = True
-
-def click(event, x, y, flags, param):
-    global piss
-    if event == cv2.EVENT_LBUTTONUP:
-        piss = [x,y]
-        print(piss)
-
-cv2.namedWindow("Transformed frame")
-cv2.setMouseCallback("Transformed frame", click)
 
 cv2.namedWindow("Camera frame")
 cv2.setMouseCallback("Camera frame", click_and_crop)
