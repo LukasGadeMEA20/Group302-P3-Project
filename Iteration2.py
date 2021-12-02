@@ -4,6 +4,7 @@ import matplotlib as plt
 import copy
 import math
 import os
+import imutils
 import pyautogui
 
 DATABASE_PATH = 'card_data_base'
@@ -191,77 +192,103 @@ def checkDistance(mousePosition, cardCenter):
 def findFloodContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_FLOODFILL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
-def rotateImage(img):
-    rows = img.shape[0]
-    cols = img.shape[1]
+#def rotateImage(img):
+    #rows = img.shape[0]
+    #cols = img.shape[1]
 
-    # Creates a rotation matrix to rotate (counter)clockwise
-    M = cv2.getRotationMatrix2D((cols/2, rows/2),-90,1)
-    # Returns the input rotated.
-    return cv2.warpAffine(img,M,(cols,rows))
+    #rotated = imutils.rotate_bound(img, 90)
+    
+    # grab the dimensions of the image and then determine the
+    # center
+    #(h, w) = img.shape[:2]
+    #(cX, cY) = (w / 2, h / 2)
+
+    # grab the rotation matrix (applying the negative of the
+    # angle to rotate clockwise), then grab the sine and cosine
+    # (i.e., the rotation components of the matrix)
+    #M = cv2.getRotationMatrix2D((cX, cY), -90, 1.0)
+    #cos = np.abs(M[0, 0])
+    #sin = np.abs(M[0, 1])
+
+    # compute the new bounding dimensions of the image
+    #nW = int((h * sin) + (w * cos))
+    #nH = int((h * cos) + (w * sin))
+
+    # adjust the rotation matrix to take into account translation
+    #M[0, 2] += (nW / 2) - cX
+    #M[1, 2] += (nH / 2) - cY
+
+    # perform the actual rotation and return the image
+    #rotated = cv2.warpAffine(img, M, (nW, nH))
+
+    #return rotated
 
 
-def checkRotate(img, i):
+def checkRotate(img):
     imgToRotate = copy.copy(img)
-    cv2.imshow(str(i),imgToRotate)
+    for i in range(4):
+        warpedGray = grayScale(imgToRotate)
+        cv2.imshow(str(i),warpedGray)
 
-    symbol = imgToRotate[10:40, 260:285]
-    #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
-    symbolPP = preProcess(symbol, 50)
-    im_floodfill_inv = cv2.bitwise_not(symbolPP)
+        symbol = warpedGray[10:40, 275:295]
+        #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
+        symbolPP = preProcess(symbol, 70)
+        im_floodfill_inv = cv2.bitwise_not(symbolPP)
 
-    blob = blobFinder(im_floodfill_inv)
-    #print(blob)
-    if blob != []:
-        print("game")
-        return imgToRotate
-    else:
-        cv2.resize(imgToRotate, [300,400])
-        return rotateImage(imgToRotate)
+        blob = blobFinder(im_floodfill_inv, i)
+        if blob != []:
+            #cv2.imshow("LEZ GO"+str(i), imgToRotate)
+            return imgToRotate
+        else:
+            imgToRotate = cv2.resize(imgToRotate, [400,300])
+            cv2.imshow("piss"+str(i), imgToRotate)
+            imgToRotate = imutils.rotate_bound(imgToRotate, 90)
 
     #blob = cv2.resize(blob, [300,300])
     #cv2.imshow("BLOB",blob)
 
     #return imgToRotate
 
-def blobFinder(img):
+def blobFinder(img,i):
+    blob = cv2.resize(img, [100,100])
+    print("k")
     # Setup SimpleBlobDetector parameters.
     params = cv2.SimpleBlobDetector_Params()
 
     # Change thresholds
-    params.minThreshold = 10
+    params.minThreshold = 100
     params.maxThreshold = 200
 
     # Filter by Area.
     params.filterByArea = True
-    params.minArea = 50
+    params.minArea = 400
     # This value is what i tweaked to filter which areas it outlines
     # The value has to be 1602 or above to only outline the biggest blob.
 
     # Filter by Circularity
     params.filterByCircularity = True
-    params.minCircularity = 0.1
+    params.minCircularity = 0.6
 
     # Filter by Convexity
-    params.filterByConvexity = True
+    params.filterByConvexity = False
     params.minConvexity = 0.87
 
     # Filter by Inertia
-    params.filterByInertia = True
+    params.filterByInertia = False
     params.minInertiaRatio = 0.01
 
     # Create a detector with the parameters
     detector = cv2.SimpleBlobDetector_create(params)
 
     # Detect blobs.
-    keypoints = detector.detect(img)
+    keypoints = detector.detect(blob)
 
     # Draw detected blobs as red circles.
     # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures
     # the size of the circle corresponds to the size of blob
 
-    im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    #cv2.imshow("image", im_with_keypoints)
+    im_with_keypoints = cv2.drawKeypoints(blob, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    cv2.imshow(("image"+str(i)), im_with_keypoints)
     return keypoints
 
 def distance(p1, p2):
@@ -294,19 +321,15 @@ def drawContours(c, frame, copiedFrame):
                 pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
                 M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
                 warped = cv2.warpPerspective(frame,M,(300,400))
-                warpedGray = grayScale(warped)
 
-                for i in range(4):
-                    symbol = checkRotate(warpedGray, i)
+                correctImage = checkRotate(warped)
                 
-                symbol = cv2.resize(symbol, [300,300])
-                cv2.imshow("IMGTOROTATE image", symbol)
                 #rotated = rotateImage(warped) #this function rotates the image. 
                 # Warp it to be the correct dimensions
-                cv2.imshow('Transformed frame', warped)
+                cv2.imshow('Transformed frame', correctImage)
 
                 #Crop the image to get the artwork and show it
-                croppedImg = warped[50:220, 30:270]
+                croppedImg = correctImage[50:220, 30:270]
                 cv2.imshow("Cropped image", croppedImg)
 
                 #Preprocess the cropped image and show it
