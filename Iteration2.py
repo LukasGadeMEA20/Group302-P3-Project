@@ -228,10 +228,8 @@ def checkRotate(img):
     imgToRotate = copy.copy(img)
     for i in range(4):
         warpedGray = grayScale(imgToRotate)
-        cv2.imshow(str(i),warpedGray)
 
         symbol = warpedGray[10:40, 275:295]
-        #hist = cv2.calcHist([imgToRotate],[0],None,[256],[0,256])
         symbolPP = preProcess(symbol, 70)
         im_floodfill_inv = cv2.bitwise_not(symbolPP)
 
@@ -241,7 +239,6 @@ def checkRotate(img):
             return imgToRotate
         else:
             imgToRotate = cv2.resize(imgToRotate, [400,300])
-            cv2.imshow("piss"+str(i), imgToRotate)
             imgToRotate = imutils.rotate_bound(imgToRotate, 90)
 
     #blob = cv2.resize(blob, [300,300])
