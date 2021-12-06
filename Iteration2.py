@@ -5,6 +5,7 @@ import copy
 import math
 import os
 import imutils
+import inspect
 import pyautogui
 
 DATABASE_PATH = 'card_data_base'
@@ -70,6 +71,13 @@ def click_and_crop(event, x, y, flags, param):
 cv2.namedWindow("Camera frame")
 cv2.setMouseCallback("Camera frame", click_and_crop)
 
+def click(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONUP:
+        print(str(x),str(y))
+
+cv2.namedWindow("Transformed frame")
+cv2.setMouseCallback("Transformed frame", click)
+
 def checkMousePoint(point):
     global clicked
     #print(im_out[point[1],point[0]])
@@ -83,7 +91,7 @@ def setCameraSize(cap):
     ret, frame = cap.read()
     
     # Capture frame by frame
-    return cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
+    return cv2.resize(frame, None, fx=1, fy=1, interpolation=cv2.INTER_AREA)
     
 #while True:
     # Capture frame by frame
@@ -229,12 +237,22 @@ def checkRotate(img):
     for i in range(4):
         warpedGray = grayScale(imgToRotate)
 
-        symbol = warpedGray[10:40, 275:295]
-        symbolPP = preProcess(symbol, 70)
-        im_floodfill_inv = cv2.bitwise_not(symbolPP)
+        manaSymbol = warpedGray[5:35, 265:295]
+        #cv2.imshow(("manaGray"+str(i)), manaSymbol)
+        ret, manaSymbol_th = threshholdImage(manaSymbol, 70)
+        manaSymbol_inv = cv2.bitwise_not(manaSymbol_th)
+        manaBlob = blobFinder(manaSymbol_inv, i, 100, 200, True, 400, False, 0.2, False, 0.6, False, 0)
 
-        blob = blobFinder(im_floodfill_inv, i)
-        if blob != []:
+        manaSymbolReassurance = warpedGray[360:395, 270:305]
+        ret, manaSymbolReassurance_th = threshholdImage(manaSymbolReassurance, 70)
+        manaSymbolReassurance_inv = cv2.bitwise_not(manaSymbolReassurance_th)
+        manaBlobReassurance = blobFinder(manaSymbolReassurance_inv, i+4, 100, 200, True, 500, False, 0.2, False, 0.6, False, 0)
+        #setSymbol = warpedGray[230:250, 250:295]
+        #setSymbolPreP = preProcess(setSymbol, 10)
+
+        #symbolBlob = symbolBlobFinder(im_floodfill_inv, i)
+
+        if manaBlob != [] and manaBlobReassurance == []:
             #cv2.imshow("LEZ GO"+str(i), imgToRotate)
             return imgToRotate
         else:
@@ -246,33 +264,33 @@ def checkRotate(img):
 
     #return imgToRotate
 
-def blobFinder(img,i):
+def blobFinder(img, i, min_thresh, max_thresh, fBA, fBA_min, fBCi, fBCi_min, fBCO, fBCO_min, fBI, fBI_min):
     blob = cv2.resize(img, [100,100])
-    print("k")
+    #print(cv2.calcHist(blob,[0],None,[256],[0,256]))
     # Setup SimpleBlobDetector parameters.
     params = cv2.SimpleBlobDetector_Params()
 
     # Change thresholds
-    params.minThreshold = 100
-    params.maxThreshold = 200
+    params.minThreshold = min_thresh
+    params.maxThreshold = max_thresh
 
     # Filter by Area.
-    params.filterByArea = True
-    params.minArea = 400
+    params.filterByArea = fBA
+    params.minArea = fBA_min
     # This value is what i tweaked to filter which areas it outlines
     # The value has to be 1602 or above to only outline the biggest blob.
 
     # Filter by Circularity
-    params.filterByCircularity = True
-    params.minCircularity = 0.6
+    params.filterByCircularity = fBCi
+    params.minCircularity = fBCi_min
 
     # Filter by Convexity
-    params.filterByConvexity = False
-    params.minConvexity = 0.87
+    params.filterByConvexity = fBCO
+    params.minConvexity = fBCO_min
 
     # Filter by Inertia
-    params.filterByInertia = False
-    params.minInertiaRatio = 0.01
+    params.filterByInertia = fBI
+    params.minInertiaRatio = fBI_min
 
     # Create a detector with the parameters
     detector = cv2.SimpleBlobDetector_create(params)
@@ -344,32 +362,33 @@ def drawContours(c, frame, copiedFrame):
         
         
 if __name__ == '__main__':
-    cap = loadCamera()
+    # - Setup phase - #
+    cap = loadCamera() # Load the camera
+    #Resizing the camera feed
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    #Initialize the database and set it as a global variable
     global database
     database = load_database()
+
+
     while True:
-        frame = setCameraSize(cap)
+        #frame = setCameraSize(cap)
+        
+        ret, frame = cap.read()
         copiedFrame = copy.copy(frame)
         gray = grayScale(frame)
         #ret, thresh_img = threshholdImage(gray, 100)
         thresh_img = preProcess(gray, 123)
         eroded = erode(thresh_img,11)
-        #eroded = dilate(eroded,3)
+        #dilated = dilate(eroded,3)
         if clicked:
             contours = findContours(eroded)
             cardClickedContours = selectOne(contours)
             drawContours(cardClickedContours, frame, copiedFrame)
             clicked = False
-        #contours = findContours(thresh_img)
         
-        # Show the processed webcam feed
-        cv2.imshow('Threshold frame', thresh_img)
-        cv2.imshow('Eroded', eroded)
-
-        # Show the processed webcam feed
-        cv2.imshow('Threshold frame', thresh_img)
         cv2.imshow('Camera frame', frame)
-        #cv2.imshow('Transformed frame', dst)
 
         c = cv2.waitKey(1)
         if c == 27: #Press escape to exit
