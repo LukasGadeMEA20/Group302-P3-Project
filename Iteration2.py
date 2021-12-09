@@ -5,6 +5,7 @@ import copy
 import math
 import os
 import imutils
+import glob
 import inspect
 import pyautogui
 
@@ -30,7 +31,11 @@ clicked = False
 
 def load_database(verbose: bool = False) -> np.ndarray:
     """Load and preprocess the database of images"""
+    global database, imageNames
     database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
+    images = [cv2.imread(file) for file in glob.glob("card_data_base/*.jpg")]
+    onlyfiles = [f for f in os.listdir("card_data_base/") if os.path.isfile(os.path.join("card_data_base/", f))]
+    print(onlyfiles)
     if verbose:
         fig_list = []
         ax_list = []
@@ -40,13 +45,12 @@ def load_database(verbose: bool = False) -> np.ndarray:
             ax_list.append(ax)
 
     for i in range(N_IMAGES):
-        img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.jpg'))  # Read image in BGR (height, width, 3)
+        #img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.jpg'))  # Read image in BGR (height, width, 3)
+        img = images[i]
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale (height, width)
         img_vector = img_gray.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         database[i, :] = img_vector  
-
-    return database
 
 def compare(greyCrop,database):
     for i in range(N_IMAGES):
@@ -145,9 +149,6 @@ def dilate(input, kSize):
 def threshholdImage(gray, tVal):
     return cv2.threshold(gray, tVal, 255, cv2.THRESH_BINARY_INV)
 
-def otsuThreshholdImage(gray):
-    return cv2.threshold(gray,125,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-
 def findContours(thresh_img):
     return cv2.findContours(thresh_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
@@ -186,9 +187,6 @@ def findMiddlePoint(array):
 
 def checkDistance(mousePosition, cardCenter):
     return math.dist(mousePosition, cardCenter)
-
-def findFloodContours(thresh_img):
-    return cv2.findContours(thresh_img, cv2.RETR_FLOODFILL, cv2.CHAIN_APPROX_SIMPLE)[-2]
 
 #def rotateImage(img):
     #rows = img.shape[0]
@@ -341,8 +339,6 @@ def drawContours(c, frame, copiedFrame):
 
             #Preprocess the cropped image and show it
             greyCrop = grayScale(croppedImg)
-            ret, threshCrop = otsuThreshholdImage(greyCrop)
-            cv2.imshow("Cropped grey", threshCrop)
             compare(greyCrop, database)
     except:
         print("Error 2")    
@@ -357,9 +353,8 @@ if __name__ == '__main__':
     #Resizing the camera feed
     setCameraSize(cap)
     #Initialize the database and set it as a global variable
-    global database
-    database = load_database()
-
+    load_database()
+    print(database)
 
     while True:
         #frame = setCameraSize(cap)
