@@ -6,6 +6,7 @@ import math
 import os
 import imutils
 import glob
+import requests
 import inspect
 import pyautogui
 
@@ -31,11 +32,10 @@ clicked = False
 
 def load_database(verbose: bool = False) -> np.ndarray:
     """Load and preprocess the database of images"""
-    global database, imageNames
+    global database, onlyfiles
     database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
     images = [cv2.imread(file) for file in glob.glob("card_data_base/*.jpg")]
     onlyfiles = [f for f in os.listdir("card_data_base/") if os.path.isfile(os.path.join("card_data_base/", f))]
-    print(onlyfiles)
     if verbose:
         fig_list = []
         ax_list = []
@@ -51,6 +51,19 @@ def load_database(verbose: bool = False) -> np.ndarray:
         img_vector = img_gray.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         database[i, :] = img_vector  
+
+def getMagicCard(card):
+    scryfallAPI = requests.get("https://api.scryfall.com/cards/search?q={}".format(card))
+    if scryfallAPI.status_code == 200:
+        #Gemmer den som sin egen JSON fil
+        scryfallJSON = scryfallAPI.json()
+        #Tilføjer navnet fra det element vi er nået til i bibliotekket og bagefter et element fra det data vi får fra api'en.
+        print(scryfallJSON)
+        #url = scryfallJSON['']
+        #cardToDisplay = cv2.imread(url)
+        #data['colors'].append({'color': str(i),"total_cards": str(scryfallJSON['total_cards'])})
+    else:
+        print("api.scryfall:\n\tstatus_code:", scryfallAPI.status_code)
 
 def compare(greyCrop,database):
     for i in range(N_IMAGES):
