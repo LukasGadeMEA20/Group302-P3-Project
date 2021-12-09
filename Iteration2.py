@@ -7,8 +7,7 @@ import os
 import imutils
 import glob
 import requests
-import inspect
-import pyautogui
+from skimage import io   
 
 DATABASE_PATH = 'card_data_base'
 N_IMAGES = 6
@@ -58,14 +57,16 @@ def getMagicCard(card):
         #Gemmer den som sin egen JSON fil
         scryfallJSON = scryfallAPI.json()
         #Tilføjer navnet fra det element vi er nået til i bibliotekket og bagefter et element fra det data vi får fra api'en.
-        print(scryfallJSON)
+        url = scryfallJSON['data'][0]['image_uris']['border_crop']
         #url = scryfallJSON['']
-        #cardToDisplay = cv2.imread(url)
-        #data['colors'].append({'color': str(i),"total_cards": str(scryfallJSON['total_cards'])})
+        cardToDisplay = io.imread(url)
+        cardToDisplay = cv2.cvtColor(cardToDisplay, cv2.COLOR_RGB2BGR)
+        cv2.imshow("Name",cardToDisplay)
     else:
         print("api.scryfall:\n\tstatus_code:", scryfallAPI.status_code)
 
-def compare(greyCrop,database):
+def compare(greyCrop):
+    dot_prod = 0
     for i in range(N_IMAGES):
         #img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
         img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
@@ -74,6 +75,7 @@ def compare(greyCrop,database):
         dot_prod = dot_prod / np.sum(dot_prod)  # Normalize dot product such that sum is 1
         # Print results:
         print(f'Input image had index: {i} OMP predicts index: {np.argmax(dot_prod)}, with "probability": {dot_prod[np.argmax(dot_prod)]}')
+    return np.argmax(dot_prod)
 
 def click_and_crop(event, x, y, flags, param):
 	# grab references to the global variables
@@ -347,14 +349,20 @@ def drawContours(c, frame, copiedFrame):
             cv2.imshow('Transformed frame', correctImage)
 
             #Crop the image to get the artwork and show it
-            croppedImg = correctImage[50:220, 30:270]
+            croppedImg = correctImage[30:220, 10:290]
+            # If above gets changed, add a cv2.resize
             cv2.imshow("Cropped image", croppedImg)
 
             #Preprocess the cropped image and show it
             greyCrop = grayScale(croppedImg)
-            compare(greyCrop, database)
+            print(greyCrop)
     except:
         print("Error 2")    
+           
+    card = compare(greyCrop)
+    print(card)
+    getMagicCard(onlyfiles[card].replace(".jpg",""))
+    
     
     
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
@@ -367,7 +375,6 @@ if __name__ == '__main__':
     setCameraSize(cap)
     #Initialize the database and set it as a global variable
     load_database()
-    print(database)
 
     while True:
         #frame = setCameraSize(cap)
@@ -385,6 +392,7 @@ if __name__ == '__main__':
             clicked = False
         
         cv2.imshow('Camera frame', frame)
+        cv2.imshow('eroded',eroded)
 
         c = cv2.waitKey(1)
         if c == 27: #Press escape to exit
