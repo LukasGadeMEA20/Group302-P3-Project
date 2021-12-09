@@ -87,18 +87,8 @@ def checkMousePoint(point):
         clicked = False
 
 def setCameraSize(cap):
-    # Capture frame by frame
-    ret, frame = cap.read()
-    
-    # Capture frame by frame
-    return cv2.resize(frame, None, fx=1, fy=1, interpolation=cv2.INTER_AREA)
-    
-#while True:
-    # Capture frame by frame
-    #ret, frame = cap.read()
-
-    # Resizing the webcam display size
-    #frame = cv2.resize(frame, None, fx=1.5, fy=1.5, interpolation=cv2.INTER_AREA)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 def grayScale(frame):
     # Our operations on the frame come here
@@ -315,7 +305,7 @@ def drawContours(c, frame, copiedFrame):
 
     #Approximate contour as a rectangle
     perimeter = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, 0.05 * perimeter, True)
+    approx = cv2.approxPolyDP(c, 0.01 * perimeter, True)
     approx = np.squeeze(approx) #Removes redundant dimension
 
     #approx = rotateContours(approx)
@@ -328,34 +318,34 @@ def drawContours(c, frame, copiedFrame):
             cv2.circle(copiedFrame, (x, y), 3, (0, 255, 0), -1)
             cv2.putText(copiedFrame,(str(x)+','+str(y)),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
             #cv2.imshow('Gaming frame', copiedFrame)
-
-        try:
-            # drawing skewed rectangle
-            cv2.drawContours(copiedFrame, [approx], -1, (0, 255, 0))
-            if len(approx) == 4:
-                pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
-                M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
-                warped = cv2.warpPerspective(frame,M,(300,400))
-
-                correctImage = checkRotate(warped)
-                
-                #rotated = rotateImage(warped) #this function rotates the image. 
-                # Warp it to be the correct dimensions
-                cv2.imshow('Transformed frame', correctImage)
-
-                #Crop the image to get the artwork and show it
-                croppedImg = correctImage[50:220, 30:270]
-                cv2.imshow("Cropped image", croppedImg)
-
-                #Preprocess the cropped image and show it
-                greyCrop = grayScale(croppedImg)
-                ret, threshCrop = otsuThreshholdImage(greyCrop)
-                cv2.imshow("Cropped grey", threshCrop)
-                compare(greyCrop, database)
-        except:
-            print("Error 2")
     except:
-        print("Could not find card")    
+        print("Could not find card")
+
+    try:
+        # drawing skewed rectangle
+        cv2.drawContours(copiedFrame, [c], -1, (0, 255, 0))
+        if len(approx) == 4:
+            pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
+            M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
+            warped = cv2.warpPerspective(frame,M,(300,400))
+
+            correctImage = checkRotate(warped)
+            
+            #rotated = rotateImage(warped) #this function rotates the image. 
+            # Warp it to be the correct dimensions
+            cv2.imshow('Transformed frame', correctImage)
+
+            #Crop the image to get the artwork and show it
+            croppedImg = correctImage[50:220, 30:270]
+            cv2.imshow("Cropped image", croppedImg)
+
+            #Preprocess the cropped image and show it
+            greyCrop = grayScale(croppedImg)
+            ret, threshCrop = otsuThreshholdImage(greyCrop)
+            cv2.imshow("Cropped grey", threshCrop)
+            compare(greyCrop, database)
+    except:
+        print("Error 2")    
     
     
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
@@ -365,8 +355,7 @@ if __name__ == '__main__':
     # - Setup phase - #
     cap = loadCamera() # Load the camera
     #Resizing the camera feed
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) 
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    setCameraSize(cap)
     #Initialize the database and set it as a global variable
     global database
     database = load_database()
@@ -374,7 +363,6 @@ if __name__ == '__main__':
 
     while True:
         #frame = setCameraSize(cap)
-        
         ret, frame = cap.read()
         copiedFrame = copy.copy(frame)
         gray = grayScale(frame)
