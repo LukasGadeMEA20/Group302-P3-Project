@@ -380,7 +380,7 @@ if __name__ == '__main__':
     #Resizing the camera feed
     setCameraSize(cap)
     #Initialize the database and set it as a global variable
-    #load_database()
+    load_database()
 
     while True:
         #frame = setCameraSize(cap)
