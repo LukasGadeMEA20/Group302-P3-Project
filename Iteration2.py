@@ -67,7 +67,7 @@ def getMagicCard(card):
 
 def compare(greyCrop):
     dot_prod = 0
-    for i in range(N_IMAGES):
+    for i in range(len(onlyfiles)):
         #img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.png'))  # Read image in BGR (height, width, 3)
         img_vector = greyCrop.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
