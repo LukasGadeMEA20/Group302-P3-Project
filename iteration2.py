@@ -360,9 +360,9 @@ def findTheCard(c, frame, copiedFrame):
     except:
         print("Error 2")    
            
-    #card = compare(greyCrop)
+    card = compare(greyCrop)
     #print(card)
-    #getMagicCard(onlyfiles[card].replace(".jpg",""))
+    getMagicCard(onlyfiles[card].replace(".jpg",""))
     
     
     
