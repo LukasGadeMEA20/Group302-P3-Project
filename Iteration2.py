@@ -337,32 +337,37 @@ def findTheCard(c, frame, copiedFrame):
         print("Could not find card")
     # drawing skewed rectangle
     cv2.drawContours(copiedFrame, [c], -1, (0, 255, 0))
-    try:
-        if len(approx) == 4:
+    if len(approx) == 4:
+        try:
             pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
             M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
             warped = cv2.warpPerspective(frame,M,(300,400))
+        
+        except:
+            print("Cannot warp persepctive")
 
+        try:
             correctImage = checkRotate(warped)
-            
-            #rotated = rotateImage(warped) #this function rotates the image. 
-            # Warp it to be the correct dimensions
-            cv2.imshow('Transformed frame', correctImage)
+        except:
+            print("Cannot rotate image")
+        
+        #rotated = rotateImage(warped) #this function rotates the image. 
+        # Warp it to be the correct dimensions
+        cv2.imshow('Transformed frame', correctImage)
 
-            #Crop the image to get the artwork and show it
-            croppedImg = correctImage[30:220, 10:290]
-            # If above gets changed, add a cv2.resize
-            cv2.imshow("Cropped image", croppedImg)
+        #Crop the image to get the artwork and show it
+        croppedImg = correctImage[30:220, 10:290]
+        # If above gets changed, add a cv2.resize
+        cv2.imshow("Cropped image", croppedImg)
 
-            #Preprocess the cropped image and show it
+        try:
+        #Preprocess the cropped image and show it
             greyCrop = grayScale(croppedImg)
-            print(greyCrop)
-    except:
-        print("Error 2")    
-           
-    card = compare(greyCrop)
-    #print(card)
-    getMagicCard(onlyfiles[card].replace(".jpg",""))
+        #print(greyCrop)    
+            card = compare(greyCrop)
+            getMagicCard(onlyfiles[card].replace(".jpg",""))
+        except:
+            print("Cannot compare image")
     
     
     
