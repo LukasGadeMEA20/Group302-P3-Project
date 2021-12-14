@@ -306,14 +306,16 @@ def blobFinder(img, i, min_thresh, max_thresh, fBA, fBA_min, fBCi, fBCi_min, fBC
     # the size of the circle corresponds to the size of blob
 
     im_with_keypoints = cv2.drawKeypoints(blob, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    cv2.imshow(("image"+str(i)), im_with_keypoints)
+    #cv2.imshow(("image"+str(i)), im_with_keypoints)
     return keypoints
 
 def distance(p1, p2):
     return math.sqrt(math.pow((p2[1]-p1[1]),2) + math.pow((p2[0]-p1[0]),2))
 
-def drawContours(c, frame, copiedFrame):
+# algorithm for finding the specified card.
+def findTheCard(c, frame, copiedFrame):
     #for c in contours:
+    #Visualization
     cv2.drawContours(copiedFrame, c, -1, (255,0,0), 3)
 
     #Approximate contour as a rectangle
@@ -322,7 +324,7 @@ def drawContours(c, frame, copiedFrame):
     approx = np.squeeze(approx) #Removes redundant dimension
 
     #approx = rotateContours(approx)
-    # drawing points
+    # drawing points for visualization
     try:
         #drawing points
         for point in approx:
@@ -333,10 +335,9 @@ def drawContours(c, frame, copiedFrame):
             #cv2.imshow('Gaming frame', copiedFrame)
     except:
         print("Could not find card")
-
+    # drawing skewed rectangle
+    cv2.drawContours(copiedFrame, [c], -1, (0, 255, 0))
     try:
-        # drawing skewed rectangle
-        cv2.drawContours(copiedFrame, [c], -1, (0, 255, 0))
         if len(approx) == 4:
             pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
             M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
@@ -359,9 +360,9 @@ def drawContours(c, frame, copiedFrame):
     except:
         print("Error 2")    
            
-    card = compare(greyCrop)
-    print(card)
-    getMagicCard(onlyfiles[card].replace(".jpg",""))
+    #card = compare(greyCrop)
+    #print(card)
+    #getMagicCard(onlyfiles[card].replace(".jpg",""))
     
     
     
@@ -374,7 +375,7 @@ if __name__ == '__main__':
     #Resizing the camera feed
     setCameraSize(cap)
     #Initialize the database and set it as a global variable
-    load_database()
+    #load_database()
 
     while True:
         #frame = setCameraSize(cap)
@@ -388,11 +389,11 @@ if __name__ == '__main__':
         if clicked:
             contours = findContours(eroded)
             cardClickedContours = selectOne(contours)
-            drawContours(cardClickedContours, frame, copiedFrame)
+            findTheCard(cardClickedContours, frame, copiedFrame)
             clicked = False
         
         cv2.imshow('Camera frame', frame)
-        cv2.imshow('eroded',eroded)
+        #cv2.imshow('eroded',eroded)
 
         c = cv2.waitKey(1)
         if c == 27: #Press escape to exit
