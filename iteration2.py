@@ -18,7 +18,7 @@ np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
 #image = cv2.imread('C:\\Users\\profe\\OneDrive\\Skrivebord\\Github\\Group302-P3-Project\\dImages\\testImg.png')
 def loadCamera():
-    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
     # Check if the webcam is opened correctly
     if not cap.isOpened():
@@ -32,24 +32,24 @@ clicked = False
 def load_database(verbose: bool = False) -> np.ndarray:
     """Load and preprocess the database of images"""
     global database, onlyfiles
-    database = np.zeros((N_IMAGES, int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
     images = [cv2.imread(file) for file in glob.glob("card_data_base/*.jpg")]
     onlyfiles = [f for f in os.listdir("card_data_base/") if os.path.isfile(os.path.join("card_data_base/", f))]
+    database = np.zeros((len(onlyfiles), int(IMG_WIDTH * IMG_HEIGHT)))  # Container for database
     if verbose:
         fig_list = []
         ax_list = []
-        for _ in range(N_IMAGES):
+        for _ in range(len(onlyfiles)):
             fig, ax = plt.subplots(1, 3)
             fig_list.append(fig)
             ax_list.append(ax)
 
-    for i in range(N_IMAGES):
-        #img = cv2.imread(os.path.join(DATABASE_PATH, f'new_card{i}.jpg'))  # Read image in BGR (height, width, 3)
+    for i in range(len(onlyfiles)):
         img = images[i]
         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale (height, width)
         img_vector = img_gray.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         database[i, :] = img_vector  
+        
 
 def getMagicCard(card):
     scryfallAPI = requests.get("https://api.scryfall.com/cards/search?q={}".format(card))
@@ -244,12 +244,12 @@ def checkRotate(img):
         #cv2.imshow(("manaGray"+str(i)), manaSymbol)
         ret, manaSymbol_th = threshholdImage(manaSymbol, 70)
         manaSymbol_inv = cv2.bitwise_not(manaSymbol_th)
-        manaBlob = blobFinder(manaSymbol_inv, i, 100, 200, True, 400, False, 0.2, False, 0.6, False, 0)
+        manaBlob = blobFinder(manaSymbol_inv, i, 100, 200, True, 300, False, 0.2, False, 0.6, False, 0)
 
         manaSymbolReassurance = warpedGray[360:395, 270:305]
         ret, manaSymbolReassurance_th = threshholdImage(manaSymbolReassurance, 70)
         manaSymbolReassurance_inv = cv2.bitwise_not(manaSymbolReassurance_th)
-        manaBlobReassurance = blobFinder(manaSymbolReassurance_inv, i+4, 100, 200, True, 500, False, 0.2, False, 0.6, False, 0)
+        manaBlobReassurance = blobFinder(manaSymbolReassurance_inv, i+4, 100, 200, True, 400, False, 0.2, False, 0.6, False, 0)
         #setSymbol = warpedGray[230:250, 250:295]
         #setSymbolPreP = preProcess(setSymbol, 10)
 
@@ -342,35 +342,32 @@ def findTheCard(c, frame, copiedFrame):
             pts2 = np.float32([[0,0],[0,400],[300,400],[300,0]])
             M = cv2.getPerspectiveTransform(approx.astype(np.float32),pts2)
             warped = cv2.warpPerspective(frame,M,(300,400))
+
+            try:
+                correctImage = checkRotate(warped)
+                
+                #rotated = rotateImage(warped) #this function rotates the image. 
+                # Warp it to be the correct dimensions
+                cv2.imshow('Transformed frame', correctImage)
+
+                #Crop the image to get the artwork and show it
+                croppedImg = correctImage[30:220, 10:290]
+                # If above gets changed, add a cv2.resize
+                cv2.imshow("Cropped image", croppedImg)
+
+                try:
+                #Preprocess the cropped image and show it
+                    greyCrop = grayScale(croppedImg)
+                #print(greyCrop)    
+                    card = compare(greyCrop)
+                    getMagicCard(onlyfiles[card].replace(".jpg",""))
+                except:
+                    print("Cannot compare image")
+            except:
+                print("Cannot rotate image")
         
         except:
             print("Cannot warp persepctive")
-
-        try:
-            correctImage = checkRotate(warped)
-        except:
-            print("Cannot rotate image")
-        
-        #rotated = rotateImage(warped) #this function rotates the image. 
-        # Warp it to be the correct dimensions
-        cv2.imshow('Transformed frame', correctImage)
-
-        #Crop the image to get the artwork and show it
-        croppedImg = correctImage[30:220, 10:290]
-        # If above gets changed, add a cv2.resize
-        cv2.imshow("Cropped image", croppedImg)
-
-        try:
-        #Preprocess the cropped image and show it
-            greyCrop = grayScale(croppedImg)
-        #print(greyCrop)    
-            card = compare(greyCrop)
-            getMagicCard(onlyfiles[card].replace(".jpg",""))
-        except:
-            print("Cannot compare image")
-    
-    
-    
     #elif c == 32: # Makes it so it only does the contour code when spacebar is clicked
         
         
@@ -400,7 +397,7 @@ if __name__ == '__main__':
             clicked = False
         
         cv2.imshow('Camera frame', frame)
-        #cv2.imshow('eroded',eroded)
+        cv2.imshow('eroded',eroded)
 
         c = cv2.waitKey(1)
         if c == 27: #Press escape to exit
