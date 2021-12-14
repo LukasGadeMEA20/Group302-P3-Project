@@ -11,8 +11,8 @@ from skimage import io
 
 DATABASE_PATH = 'card_data_base'
 N_IMAGES = 6
-IMG_WIDTH = 240
-IMG_HEIGHT = 170
+IMG_WIDTH = 280
+IMG_HEIGHT = 190
 
 np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Choose which webcam to capture, 0 for default, 1 for external
@@ -380,7 +380,9 @@ if __name__ == '__main__':
     #Resizing the camera feed
     setCameraSize(cap)
     #Initialize the database and set it as a global variable
+    
     load_database()
+    print(onlyfiles)
 
     while True:
         #frame = setCameraSize(cap)
