@@ -1,44 +1,54 @@
 #GET CARDS
-
+# Relevant packages
 import json, requests, os
 from PIL import Image
  
-#with open(r'C:\Users\mail\OneDrive\Dokumenter\scryfallimgdownload\code shit\unique-artwork-20211209101312.json', 'r', encoding='utf-8') as f:
-#    cards = json.load(f)
- 
+# Search conditions which it uses to go onto the scryfall API
 searchCondition = '(set:stx or set:grn or set:war) r:c unique:art -type:land'
 #searchCondition = 'serra angel'
 
-def getMagicCard(card):
-    scryfallAPI = requests.get("https://api.scryfall.com/cards/search?q={}".format(card))
+# Method which gets data from the API by its search parameters
+def getMagicCard(search):
+    # Makes a request with the search conditions
+    scryfallAPI = requests.get("https://api.scryfall.com/cards/search?q={}".format(search))
+
+    # Checks the status code, to make sure it does not return a faulty database
     if scryfallAPI.status_code == 200:
-        #Gemmer den som sin egen JSON fil
+        # Saves as a JSON file
         scryfallJSON = [scryfallAPI.json()]
-        #Tilføjer navnet fra det element vi er nået til i bibliotekket og bagefter et element fra det data vi får fra api'en.
-        #url = scryfallJSON['data'][0]['image_uris']['border_crop']
-        #url = scryfallJSON['']
+        
+        # Returns the json file
         return scryfallJSON
     else:
         print("api.scryfall:\n\tstatus_code:", scryfallAPI.status_code)
 
+# Gets the cards from the API using the above method
 cards = getMagicCard(searchCondition)
+
+# Path in which the program saves the images to
 save_path= 'card_data_base/'
 
+# For loop that renames, resizes and saves every image
 for card in cards[0]['data']:
+    # Makes sure the cand language is english for whatever reason.
     if card['lang'] == 'en':
+        # Gets the image needed
         r = requests.get(card['image_uris']['art_crop'])
+
+        # Names the card
         card_name=str(card['name'] + '.jpg')
         
+        # Properly names the files 
         card_name = card_name.replace(" ", "-")
         card_name = card_name.replace(",", "")
         card_name = card_name.replace("'", "")
-        
         card_name = card_name.lower()
         
+        #Saves the file in the proper folder with its name
         completeName = os.path.join(save_path, card_name)
-        
         open(completeName, 'wb').write(r.content)
 
+        # Resizes the file by opening it, resizing and resaving
         f_img = completeName
         img = Image.open(f_img)
         img = img.resize((280,190))
