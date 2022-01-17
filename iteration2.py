@@ -40,7 +40,7 @@ def load_database(verbose: bool = False) -> np.ndarray:
     # For loop that goes through each image and adds it to the database
     for i in range(len(images)):
         img = images[i]
-        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2grey)  # Convert image to greyscale (height, width)
+        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to greyscale (height, width)
         img_vector = img_grey.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         database[i, :] = img_vector  # Adds it to the database
@@ -112,7 +112,7 @@ def setCameraSize(cap):
 
 # Method for greyscaling the image
 def greyScale(frame):
-    return cv2.cvtColor(frame, cv2.COLOR_BGR2grey) #Converting the current frame to grey
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #Converting the current frame to grey
 
 # Preprocessing part of the algorithm
 def preProcess(greyScale, val):
@@ -286,8 +286,8 @@ def blobFinder(img, i, min_thresh, max_thresh, fBA, fBA_min, fBCi, fBCi_min, fBC
     # Draw detected blobs as red circles.
     # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures
     # the size of the circle corresponds to the size of blob
-    #im_with_keypoints = cv2.drawKeypoints(blob, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    #cv2.imshow(("image"+str(i)), im_with_keypoints)
+    im_with_keypoints = cv2.drawKeypoints(blob, keypoints, np.array([]), (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    cv2.imshow(("image"+str(i)), im_with_keypoints)
 
     return keypoints
 
