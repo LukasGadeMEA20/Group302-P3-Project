@@ -18,7 +18,7 @@ np.set_printoptions(formatter={'float_kind':"{:0.2f}".format})
 # Function for getting the camera
 def loadCamera():
     # Choose which webcam to capture, 0 for default, 1 and above for external
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
     # Check if the webcam is opened correctly
     if not cap.isOpened():
@@ -295,7 +295,7 @@ def blobFinder(img, i, min_thresh, max_thresh, fBA, fBA_min, fBCi, fBCi_min, fBC
 # algorithm for finding the specified card.
 def findTheCard(c, frame, copiedFrame):
     #Visualization of the contours, debugging
-    cv2.drawContours(copiedFrame, c, -1, (255,0,0), 3)
+    #cv2.drawContours(copiedFrame, c, -1, (255,0,0), 3)
 
     #Approximate contour as a rectangle
     perimeter = cv2.arcLength(c, True)
@@ -308,14 +308,14 @@ def findTheCard(c, frame, copiedFrame):
         for point in approx:
             x = point[0]
             y = point[1]
-            cv2.circle(copiedFrame, (x, y), 3, (0, 255, 0), -1)
-            cv2.putText(copiedFrame,(str(x)+','+str(y)),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
+            #cv2.circle(copiedFrame, (x, y), 3, (0, 255, 0), -1)
+            #cv2.putText(copiedFrame,(str(x)+','+str(y)),(x,y),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),1,cv2.LINE_AA)
     except:
         print("Could not find card")
 
     
     # drawing skewed rectangle for visualization, debugging
-    cv2.drawContours(copiedFrame, [c], -1, (0, 255, 0))
+    #cv2.drawContours(copiedFrame, [approx], -1, (0, 255, 0))
 
     # Runs this only if there are 4 sides to the figure.
     if len(approx) == 4:
@@ -373,6 +373,7 @@ if __name__ == '__main__':
 
     cv2.imshow("beforeBlur", images[0])
     cv2.imshow("afterBlur", cv2.GaussianBlur(images[0],(5,5),0))
+
     # - Algorithm phase - #
     while True:
         # - Input - #
@@ -383,23 +384,30 @@ if __name__ == '__main__':
         # - Pre-process - #
         grey = greyScale(frame) # Greyscales the image
         thresh_img = preProcess(grey, 123) # Preprocess at a value of 123 - during testing was found most efficient
-        eroded = erode(thresh_img, 11) # Erodes with a large kernel of 11x11
+        eroded_img = erode(thresh_img, 11) # Erodes with a large kernel of 11x11
+        #opened_img = dilate(eroded_img, 11)
         
         # - Segmentation, representation and classification - #
         # Only when the user has clicked on a viable card
         if clicked:
             # Finds the contours
-            contours = findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours = findContours(eroded_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             # Chooses the contour based on the selected cawrd
             cardClickedContours = selectOne(contours)
             # Finds the card
             findTheCard(cardClickedContours, frame, copiedFrame)
+
+            testIndexForBlur = onlyfiles.index(cardClickedContours)
+
+            cv2.imshow("beforeBlur", images[testIndexForBlur])
+            cv2.imshow("afterBlur", cv2.GaussianBlur(images[testIndexForBlur],(5,5),0))
+
             # Makes sure it does not constantly run this part of the code again and again
             clicked = False
         
         # Feed for the user
         cv2.imshow('Camera frame', frame)
-
+        
         # Adds a listener to escape to exit the program.
         c = cv2.waitKey(1)
         if c == 27: #Press escape to exit
