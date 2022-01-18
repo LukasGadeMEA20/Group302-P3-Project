@@ -29,7 +29,7 @@ def loadCamera():
 # Loads the database
 def load_database(verbose: bool = False) -> np.ndarray:
     """Load and preprocess the database of images"""
-    global database, onlyfiles # Global variables
+    global database, onlyfiles, images # Global variables
     # Gets the jpg files
     images = [cv2.imread(file) for file in glob.glob("card_data_base/*.jpg")]
     # Gets the names of the files
@@ -371,6 +371,8 @@ if __name__ == '__main__':
     #Initialize the database
     load_database()
 
+    cv2.imshow("beforeBlur", images[0])
+    cv2.imshow("afterBlur", cv2.GaussianBlur(images[0],(5,5),0))
     # - Algorithm phase - #
     while True:
         # - Input - #
