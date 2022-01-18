@@ -232,7 +232,7 @@ def checkRotate(img):
         manaSymbol = warpedGrey[5:35, 265:295]
 
         # binarises the corner and runs the blob analysis on it
-        ret, manaSymbol_th = threshholdImage(manaSymbol, 70, cv2.THRESH_BINARY)
+        ret, manaSymbol_th = threshholdImage(manaSymbol, 100, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         manaBlob = blobFinder(manaSymbol_th, i, 100, 200, True, 300, False, 0.2, False, 0.6, False, 0)
 
 
@@ -240,7 +240,7 @@ def checkRotate(img):
         manaSymbolReassurance = warpedGrey[360:395, 270:305]
 
         # binarises the corner and runs the blob analysis on it
-        ret, manaSymbolReassurance_th = threshholdImage(manaSymbolReassurance, 70, cv2.THRESH_BINARY)
+        ret, manaSymbolReassurance_th = threshholdImage(manaSymbolReassurance, 100, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
         manaBlobReassurance = blobFinder(manaSymbolReassurance_th, i+4, 100, 200, True, 400, False, 0.2, False, 0.6, False, 0)
 
         # Checks if only the upper right corner has blobs and returns the image
