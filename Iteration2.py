@@ -398,7 +398,7 @@ if __name__ == '__main__':
             # Finds the card
             findTheCard(cardClickedContours, frame, copiedFrame)
 
-            testIndexForBlur = onlyfiles.index(card)
+            testIndexForBlur = onlyfiles[card]
 
             cv2.imshow("beforeBlur", images[testIndexForBlur])
             cv2.imshow("afterBlur", cv2.GaussianBlur(images[testIndexForBlur],(5,5),0))
