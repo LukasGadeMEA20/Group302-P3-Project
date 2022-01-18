@@ -40,7 +40,8 @@ def load_database(verbose: bool = False) -> np.ndarray:
     # For loop that goes through each image and adds it to the database
     for i in range(len(images)):
         img = images[i]
-        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to greyscale (height, width)
+        img_blur = cv2.GaussianBlur(img,(5,5),0)
+        img_grey = cv2.cvtColor(img_blur, cv2.COLOR_BGR2GRAY)  # Convert image to greyscale (height, width)
         img_vector = img_grey.flatten()  # Convert image to vector (height * width)
         img_vector = img_vector / np.linalg.norm(img_vector)  # Normalize vector such that ||img_vector||_2 = 1
         database[i, :] = img_vector  # Adds it to the database
@@ -366,6 +367,7 @@ if __name__ == '__main__':
     cap = loadCamera() # Load the camera
     #Resizing the camera feed
     setCameraSize(cap)
+
     #Initialize the database
     load_database()
 
@@ -373,10 +375,11 @@ if __name__ == '__main__':
     while True:
         # - Input - #
         ret, frame = cap.read()
+
         copiedFrame = copy.copy(frame)
 
         # - Pre-process - #
-        grey = greyScale(frame) # Greyscales
+        grey = greyScale(frame) # Greyscales the image
         thresh_img = preProcess(grey, 123) # Preprocess at a value of 123 - during testing was found most efficient
         eroded = erode(thresh_img, 11) # Erodes with a large kernel of 11x11
         
