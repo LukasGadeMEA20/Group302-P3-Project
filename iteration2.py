@@ -346,6 +346,7 @@ def findTheCard(c, frame, copiedFrame):
 
                 # Try to compare the image to the database
                 try:
+                    global card
                     #Preprocess the cropped image and show it
                     greyCrop = greyScale(croppedImg)
                     #Runs the compare function
@@ -397,7 +398,7 @@ if __name__ == '__main__':
             # Finds the card
             findTheCard(cardClickedContours, frame, copiedFrame)
 
-            testIndexForBlur = onlyfiles.index(cardClickedContours)
+            testIndexForBlur = onlyfiles.index(card)
 
             cv2.imshow("beforeBlur", images[testIndexForBlur])
             cv2.imshow("afterBlur", cv2.GaussianBlur(images[testIndexForBlur],(5,5),0))
