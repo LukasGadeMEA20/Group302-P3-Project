@@ -1,12 +1,5 @@
 # Libraries used
-import cv2
-import numpy as np
-import copy
-import math
-import os
-import imutils
-import glob
-import requests
+import cv2, numpy as np, copy, math, os, imutils, glob, requests
 from skimage import io   
 
 #Width and height of images
@@ -397,11 +390,6 @@ if __name__ == '__main__':
             cardClickedContours = selectOne(contours)
             # Finds the card
             findTheCard(cardClickedContours, frame, copiedFrame)
-
-            testIndexForBlur = onlyfiles[card]
-
-            cv2.imshow("beforeBlur", images[testIndexForBlur])
-            cv2.imshow("afterBlur", cv2.GaussianBlur(images[testIndexForBlur],(5,5),0))
 
             # Makes sure it does not constantly run this part of the code again and again
             clicked = False
